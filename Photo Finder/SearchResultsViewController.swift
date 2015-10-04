@@ -21,6 +21,17 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
     private var imageSearch = ImageSearchController()
     private var resultsToDisplay = [CollectionCellGenerator]()
 
+    // UICollectionView layout parameters
+    private let cellSpacing: CGFloat = 2
+    private let cellsPerRow: CGFloat = 4
+    private let collectionLayout: UICollectionViewFlowLayout = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .Vertical
+        layout.minimumInteritemSpacing = 2
+        layout.minimumLineSpacing = 2
+        return layout
+    }()
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -39,6 +50,17 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
         collectionView.delegate = self
         collectionView.dataSource = self
         collectionView.reloadData()
+
+        /* The following uses view.frame rather than collectionView.frame
+        because collectionView's size is not always updated by the time
+        viewDidLoad is called */
+        updateFlowLayoutForWidth(view.frame.width)
+    }
+
+    private func updateFlowLayoutForWidth(width: CGFloat) {
+        let cellWidth = (width - (cellSpacing * (cellsPerRow - 1))) / cellsPerRow
+        collectionLayout.itemSize = CGSize(width: cellWidth, height: cellWidth)
+        collectionView.setCollectionViewLayout(collectionLayout, animated: true)
     }
 
     /* Overridden to ensure UISearchBar resizes properly on rotation */
@@ -51,6 +73,7 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
                                                                 width: size.width,
                                                                 height: self.searchController.searchBar.frame.height)
             }, completion: nil)
+        updateFlowLayoutForWidth(size.width)
     }
 
     // MARK: UISearchResultsUpdating

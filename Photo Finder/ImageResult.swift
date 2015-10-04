@@ -58,8 +58,33 @@ class ImageResult: NSObject {
         }
     }
 
-    func populateImageView(imageView: UIImageView) {
-        // TODO: Load image asynchronously
+    func populateViewWithImage(imageView: UIImageView) {
+        populateView(imageView, .ImageURL)
+    }
+    func populateViewWithImageThumbnail(imageView: UIImageView) {
+        populateView(imageView, .ThumbnailURL)
+    }
+    private func populateView(imageView: UIImageView, _ urlKey: Key) {
+        if let imageURL = NSURL(string: properties[urlKey] as! String) {
+            NSLog("ImageURL: \(imageURL)")
+            let sessionConfig = NSURLSessionConfiguration.defaultSessionConfiguration()
+            let session = NSURLSession(configuration: sessionConfig)
+            let imageDownload = session.downloadTaskWithURL(imageURL, completionHandler: {
+                (imageLocation: NSURL?, response: NSURLResponse?, error: NSError?) in
+                if let imageLocation = imageLocation,
+                    let imageData = NSData(contentsOfURL: imageLocation),
+                    let image = UIImage(data: imageData) {
+                        dispatch_async(dispatch_get_main_queue(), {
+                            imageView.image = image
+                        })
+                } else {
+                    NSLog("result/configure-cell/download/error Image Coulndn't be created")
+                }
+            })
+            imageDownload.resume()
+        } else {
+            NSLog("result/configure-cell/error URL Creation Failed")
+        }
     }
     
 }
@@ -71,27 +96,7 @@ extension ImageResult: CollectionCellGenerator {
 
     func configureCell(rawCell: UICollectionViewCell) {
         if let resultCell = rawCell as? ImageResultCell {
-            if let imageURL = NSURL(string: properties[.ImageURL] as! String) {
-                NSLog("ImageURL: \(imageURL)")
-                let sessionConfig = NSURLSessionConfiguration.defaultSessionConfiguration()
-                let session = NSURLSession(configuration: sessionConfig)
-                let imageDownload = session.downloadTaskWithURL(imageURL, completionHandler: {
-                    (imageLocation: NSURL?, response: NSURLResponse?, error: NSError?) in
-                    if let imageLocation = imageLocation,
-                        let imageData = NSData(contentsOfURL: imageLocation),
-                        let image = UIImage(data: imageData) {
-                            dispatch_async(dispatch_get_main_queue(), {
-                                resultCell.preview.image = image
-                            })
-                    } else {
-                        NSLog("result/configure-cell/download/error Image Coulndn't be created")
-                    }
-                })
-                imageDownload.resume()
-            } else {
-                NSLog("result/configure-cell/error URL Creation Failed")
-            }
-
+            populateViewWithImageThumbnail(resultCell.preview)
         }
     }
 }

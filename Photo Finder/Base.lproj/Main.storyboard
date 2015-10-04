@@ -56,7 +56,7 @@
                                         <rect key="frame" x="0.0" y="0.0" width="600" height="492"/>
                                         <animations/>
                                         <color key="backgroundColor" red="0.90069711208343506" green="0.90063571929931641" blue="0.90067160129547119" alpha="1" colorSpace="calibratedRGB"/>
-                                        <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="10" minimumInteritemSpacing="10" id="BRf-8U-E3w">
+                                        <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="2" minimumInteritemSpacing="2" id="BRf-8U-E3w">
                                             <size key="itemSize" width="100" height="88"/>
                                             <size key="headerReferenceSize" width="0.0" height="0.0"/>
                                             <size key="footerReferenceSize" width="0.0" height="0.0"/>
