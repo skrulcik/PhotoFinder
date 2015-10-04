@@ -2,7 +2,7 @@
 //  SearchResultsViewController.swift
 //  Photo Finder
 //
-//  Created by Scott Krulcik on 10/3/15.
+//  Created by Scott Krulcik on 10/4/15.
 //  Copyright © 2015 Scott Krulcik. All rights reserved.
 //
 
@@ -18,7 +18,8 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
     private let resultsSection = 0
 
     private var searchController = UISearchController(searchResultsController: nil)
-    private var resultsToDisplay = ["result 1", "result 2", "result 3"]//[String]()
+    private var imageSearch = ImageSearchController()
+    private var resultsToDisplay = [CollectionCellGenerator]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -42,7 +43,6 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
 
     /* Overridden to ensure UISearchBar resizes properly on rotation */
     override func viewWillTransitionToSize(size: CGSize, withTransitionCoordinator coordinator: UIViewControllerTransitionCoordinator) {
-        print("Will Transition")
         super.viewWillTransitionToSize(size, withTransitionCoordinator: coordinator)
         coordinator.animateAlongsideTransition({
             (context: UIViewControllerTransitionCoordinatorContext) in
@@ -55,7 +55,29 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
 
     // MARK: UISearchResultsUpdating
     func updateSearchResultsForSearchController(searchController: UISearchController) {
-        print(searchController.searchBar.text)
+        // TODO: Fiter shown history as text is typed like Google Instant Search
+    }
+
+    // MARK: UISearchBarDelegate
+    func searchBarBookmarkButtonClicked(searchBar: UISearchBar) {
+        // TODO: History
+        print("Examine History")
+    }
+    func searchBarTextDidEndEditing(searchBar: UISearchBar) {
+        if let rawText = searchBar.text {
+            let queryString = rawText.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
+            if queryString.characters.count > 0 {
+                imageSearch.queryForImages(query: queryString, {
+                    (results: [ImageResult]?) in
+                    if let results = results {
+                        self.resultsToDisplay = results.map({ $0 as CollectionCellGenerator})
+                        dispatch_async(dispatch_get_main_queue(), {
+                            self.collectionView.reloadData()
+                        })
+                    }
+                })
+            }
+        }
     }
 
     // MARK: UICollectionViewDataSource
@@ -75,24 +97,15 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
     }
 
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-
-        let cell = collectionView.dequeueReusableCellWithReuseIdentifier(ImageResultCell.identifier, forIndexPath: indexPath)
-        if let resultCell = cell as? ImageResultCell
-        where indexPath.row < resultsToDisplay.count {
-            resultCell.label.text = resultsToDisplay[indexPath.row]
-        }
+        let objectForCell = resultsToDisplay[indexPath.row]
+        let cell = collectionView.dequeueReusableCellWithReuseIdentifier(objectForCell.cellIdentifier, forIndexPath: indexPath)
+        objectForCell.configureCell(cell)
         return cell
     }
 
     // MARK: UICollectionViewDelegate
     func collectionView(collectionView: UICollectionView, shouldSelectItemAtIndexPath indexPath: NSIndexPath) -> Bool {
         return false
-    }
-
-    // MARK: UISearchBarDelegate
-    func searchBarBookmarkButtonClicked(searchBar: UISearchBar) {
-        // TODO: History
-        print("Examine History")
     }
 
 
