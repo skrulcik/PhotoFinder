@@ -2,7 +2,6 @@
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="9046" systemVersion="15A279b" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="yhJ-sP-8Cb">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9035"/>
-        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
         <!--Navigation Controller-->
@@ -71,13 +70,10 @@
                                                     <rect key="frame" x="0.0" y="0.0" width="100" height="88"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <subviews>
-                                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="0cK-sL-ldo">
-                                                            <rect key="frame" x="8" y="34" width="84" height="21"/>
+                                                        <imageView userInteractionEnabled="NO" contentMode="scaleToFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="8nX-NS-hks">
+                                                            <rect key="frame" x="0.0" y="0.0" width="100" height="88"/>
                                                             <animations/>
-                                                            <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                                            <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
-                                                            <nil key="highlightedColor"/>
-                                                        </label>
+                                                        </imageView>
                                                     </subviews>
                                                     <animations/>
                                                     <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
@@ -85,12 +81,13 @@
                                                 <animations/>
                                                 <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                                 <constraints>
-                                                    <constraint firstAttribute="trailingMargin" secondItem="0cK-sL-ldo" secondAttribute="trailing" id="1V0-fN-QAe"/>
-                                                    <constraint firstItem="0cK-sL-ldo" firstAttribute="centerY" secondItem="McJ-MH-QN3" secondAttribute="centerY" id="qH4-6C-jc6"/>
-                                                    <constraint firstAttribute="leadingMargin" secondItem="0cK-sL-ldo" secondAttribute="leading" id="zpq-GW-Rpj"/>
+                                                    <constraint firstItem="8nX-NS-hks" firstAttribute="top" secondItem="McJ-MH-QN3" secondAttribute="top" id="6Mo-MD-XA3"/>
+                                                    <constraint firstAttribute="trailing" secondItem="8nX-NS-hks" secondAttribute="trailing" id="bMP-y8-7tJ"/>
+                                                    <constraint firstAttribute="bottom" secondItem="8nX-NS-hks" secondAttribute="bottom" id="fRZ-Tp-pZB"/>
+                                                    <constraint firstItem="8nX-NS-hks" firstAttribute="leading" secondItem="McJ-MH-QN3" secondAttribute="leading" id="jgj-Po-AXG"/>
                                                 </constraints>
                                                 <connections>
-                                                    <outlet property="label" destination="0cK-sL-ldo" id="h3J-y2-c2h"/>
+                                                    <outlet property="preview" destination="8nX-NS-hks" id="DBF-bg-h7u"/>
                                                 </connections>
                                             </collectionViewCell>
                                         </cells>

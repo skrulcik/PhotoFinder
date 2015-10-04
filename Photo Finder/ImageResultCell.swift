@@ -10,5 +10,5 @@ import UIKit
 
 class ImageResultCell: UICollectionViewCell {
     static let identifier = "ImageResultCell"
-    @IBOutlet var label: UILabel!
+    @IBOutlet var preview: UIImageView!
 }
