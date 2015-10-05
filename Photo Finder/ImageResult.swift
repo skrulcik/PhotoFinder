@@ -25,9 +25,10 @@ class ImageResult: NSObject {
         case ThumbnailURL = "tbUrl"
         case ImageURL = "url"
         case HumanReadableURL = "visibleUrl"
+        case WebsiteURL = "originalContextUrl"
         case Title = "titleNoFormatting"
         case Description = "contentNoFormatting"
-        static let requiredKeys = [ThumbnailURL, ImageURL, HumanReadableURL, Title, Description]
+        static let requiredKeys = [ThumbnailURL, ImageURL, HumanReadableURL, WebsiteURL, Title, Description]
     }
     private var properties: [Key : AnyObject]
     private var thumbnail: UIImage?
@@ -36,7 +37,7 @@ class ImageResult: NSObject {
         return properties[.Title] as! String
     }
     var imageDescription: String {
-        let url = properties[.HumanReadableURL] as! String
+        let url = properties[.WebsiteURL] as! String
         let info = properties[.Description] as! String
         return "\(url)\n\(info)"
     }

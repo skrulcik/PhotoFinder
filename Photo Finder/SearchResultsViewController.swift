@@ -72,6 +72,11 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
                     resultView.imageResult = object
                 }
 
+                let tapForInfo = UITapGestureRecognizer(target: self, action: "showImageDetail:")
+                tapForInfo.numberOfTapsRequired = 2
+                tapForInfo.numberOfTouchesRequired = 1
+                resultView.addGestureRecognizer(tapForInfo)
+
                 index += 1
                 if index % imPerRow == 0 {
                     minX = 0
@@ -191,6 +196,16 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
         loadFromOffset(lastRequestedIndex)
     }
 
+
+    // MARK: Gesture Recognition
+    func showImageDetail(gestureRecognizer: UITapGestureRecognizer) {
+        if let resultView = gestureRecognizer.view as? ImageResultView
+        where resultView.imageResult != nil {
+            currentSelection = resultView.imageResult
+            performSegueWithIdentifier(SearchResultsViewController.detailSegueID, sender: self)
+        }
+    }
+
     // MARK: Navigation
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
         if segue.identifier == SearchResultsViewController.detailSegueID,
@@ -200,6 +215,7 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
         }
     }
 
+    @IBAction func unwindFromDetail(segue: UIStoryboardSegue) { }
     @IBAction func closeRecentSearches(segue: UIStoryboardSegue) { }
     @IBAction func performRecentSearch(segue: UIStoryboardSegue) {
         if segue.identifier == RecentSearchesTableViewController.performSearchSegueID,
