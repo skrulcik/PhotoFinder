@@ -182,8 +182,8 @@
                                 <rect key="frame" x="0.0" y="20" width="600" height="433"/>
                                 <animations/>
                             </imageView>
-                            <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" hidesWhenStopped="YES" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="B1v-AT-qEF">
-                                <rect key="frame" x="290" y="185" width="20" height="20"/>
+                            <activityIndicatorView hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="B1v-AT-qEF">
+                                <rect key="frame" x="290" y="227" width="20" height="20"/>
                                 <animations/>
                             </activityIndicatorView>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="zep-ZR-0oQ">
@@ -205,6 +205,7 @@
                         </subviews>
                         <animations/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <gestureRecognizers/>
                         <constraints>
                             <constraint firstItem="UER-JH-Hxa" firstAttribute="top" secondItem="6wZ-xX-Qpn" secondAttribute="bottom" id="K8p-Au-L9l"/>
                             <constraint firstAttribute="leadingMargin" secondItem="dKP-xw-bxv" secondAttribute="leading" id="L7y-5o-G52"/>
@@ -221,6 +222,11 @@
                             <constraint firstItem="yph-3e-6sx" firstAttribute="top" secondItem="dKP-xw-bxv" secondAttribute="bottom" constant="8" id="vTP-xb-6bt"/>
                             <constraint firstItem="dKP-xw-bxv" firstAttribute="top" secondItem="UER-JH-Hxa" secondAttribute="bottom" constant="8" id="xhv-qU-Rjl"/>
                         </constraints>
+                        <connections>
+                            <outletCollection property="gestureRecognizers" destination="spK-Zj-YzX" appends="YES" id="je7-66-Tdd"/>
+                            <outletCollection property="gestureRecognizers" destination="dNw-uj-vyJ" appends="YES" id="fVW-T8-vez"/>
+                            <outletCollection property="gestureRecognizers" destination="xhD-DE-Woa" appends="YES" id="nsi-M9-nEX"/>
+                        </connections>
                     </view>
                     <connections>
                         <outlet property="image" destination="UER-JH-Hxa" id="JGr-Vu-b4f"/>
@@ -231,6 +237,21 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="nAo-2P-byV" userLabel="First Responder" sceneMemberID="firstResponder"/>
                 <exit id="DHg-aB-8bb" userLabel="Exit" sceneMemberID="exit"/>
+                <swipeGestureRecognizer direction="right" id="spK-Zj-YzX">
+                    <connections>
+                        <action selector="swipeRight:" destination="eMx-sp-pxB" id="31I-54-jpK"/>
+                    </connections>
+                </swipeGestureRecognizer>
+                <swipeGestureRecognizer direction="down" id="dNw-uj-vyJ">
+                    <connections>
+                        <segue destination="DHg-aB-8bb" kind="unwind" unwindAction="unwindFromDetail:" id="kxp-S3-3kY"/>
+                    </connections>
+                </swipeGestureRecognizer>
+                <swipeGestureRecognizer direction="left" id="xhD-DE-Woa">
+                    <connections>
+                        <action selector="swipeLeft:" destination="eMx-sp-pxB" id="D2r-yL-ifj"/>
+                    </connections>
+                </swipeGestureRecognizer>
             </objects>
             <point key="canvasLocation" x="2287" y="1640"/>
         </scene>

@@ -22,7 +22,7 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
     private var minimumResultsToShow = 24
     private var lastRequestedIndex = 0
     private var currentQuery: String?
-    var currentSelection: ImageResult?
+    private var currentSelectionIndex: Int?
 
     private var imageSpacing: CGFloat = 2
     private var maxImageWidth: CGFloat = 120
@@ -200,8 +200,10 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
     // MARK: Gesture Recognition
     func showImageDetail(gestureRecognizer: UITapGestureRecognizer) {
         if let resultView = gestureRecognizer.view as? ImageResultView
-        where resultView.imageResult != nil {
-            currentSelection = resultView.imageResult
+        where resultView.imageResult != nil,
+        let selectionIndex = resultViews.indexOf(resultView) {
+            let intIndex = Int(selectionIndex.value)
+            currentSelectionIndex = intIndex
             performSegueWithIdentifier(SearchResultsViewController.detailSegueID, sender: self)
         }
     }
@@ -210,8 +212,8 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
         if segue.identifier == SearchResultsViewController.detailSegueID,
             let detailVC = segue.destinationViewController as? ImageDetailViewController,
-            let selectedImageResult = currentSelection {
-                detailVC.imageResult = selectedImageResult
+            let selectionIndex = currentSelectionIndex {
+                detailVC.setupWithImageResult(resultsToDisplay, index: selectionIndex)
         }
     }
 

@@ -24,4 +24,14 @@ class RecentSearch: NSManagedObject {
         return formatter.stringFromDate(date)
     }
 
+    func updateLastSearch() {
+        lastSearchDate = NSDate().timeIntervalSince1970
+        dispatch_async(dispatch_get_main_queue(), {
+            do {
+                try self.managedObjectContext?.save()
+            } catch {
+                NSLog("recent-search/update-date/error \(error)")
+            }
+        })
+    }
 }

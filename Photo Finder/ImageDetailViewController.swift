@@ -13,19 +13,35 @@ class ImageDetailViewController: UIViewController {
     @IBOutlet weak var mainLabel: UILabel!
     @IBOutlet weak var infoLabel: UITextView!
     @IBOutlet weak var pinwheel: UIActivityIndicatorView!
-    var imageResult: ImageResult?
+    private var index: Int = 0
+    private var imageResults = [ImageResult]()
+
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        if let imageResult = imageResult {
-            setupWithImageResult(imageResult)
-        }
+        setup()
     }
 
-    private func setupWithImageResult(imageResult: ImageResult) {
-        mainLabel.text = imageResult.imageTitle
-        infoLabel.text = imageResult.imageDescription
-        pinwheel.startAnimating()
-        imageResult.populateViewWithImage(image) { self.pinwheel.stopAnimating() }
+    @IBAction func swipeRight(sender: AnyObject) {
+        index = (index - 1) % imageResults.count
+        setup()
+    }
+    @IBAction func swipeLeft(sender: AnyObject) {
+        index = (index + 1) % imageResults.count
+        setup()
+    }
+
+    func setupWithImageResult(imageResults: [ImageResult], index: Int = 0) {
+        self.imageResults = imageResults
+        self.index = index
+    }
+    private func setup() {
+        if index < imageResults.count {
+            let imageResult = imageResults[index]
+            mainLabel.text = imageResult.imageTitle
+            infoLabel.text = imageResult.imageDescription
+            pinwheel.startAnimating()
+            imageResult.populateViewWithImage(image) { self.pinwheel.stopAnimating() }
+        }
     }
 }

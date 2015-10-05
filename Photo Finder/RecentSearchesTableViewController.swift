@@ -95,7 +95,6 @@ class RecentSearchesTableViewController: UITableViewController, NSFetchedResults
 
     // MARK: UISearchResultsUpdating
     func updateSearchResultsForSearchController(searchController: UISearchController) {
-        print("Update")
         if let partialQuery = searchController.searchBar.text
             where partialQuery.characters.count > 0 {
                 fetchedResultsController.fetchRequest.predicate = NSPredicate(format: "\(RecentSearch.displayStringKey) LIKE[c] %@", partialQuery + "*")
@@ -115,6 +114,7 @@ class RecentSearchesTableViewController: UITableViewController, NSFetchedResults
             if let cell = sender as? UITableViewCell,
                 let selectedIndex = tableView.indexPathForCell(cell),
                 let recentSearch = fetchedResultsController.objectAtIndexPath(selectedIndex) as? RecentSearch {
+                    recentSearch.updateLastSearch()
                     selectedSearch = recentSearch
             }
         }

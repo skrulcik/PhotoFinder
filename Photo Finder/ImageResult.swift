@@ -80,6 +80,9 @@ class ImageResult: NSObject {
             imageView.image = fullImage
             completion?()
         } else {
+            if let thumbnail = thumbnail {
+                imageView.image = thumbnail
+            }
             populateViewFromURL(imageView, .ImageURL, completion: completion)
         }
     }
