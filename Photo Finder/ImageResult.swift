@@ -124,17 +124,3 @@ class ImageResult: NSObject {
     
 }
 
-extension ImageResult: CollectionCellGenerator {
-    var cellIdentifier: String {
-            return ImageResultCell.identifier
-    }
-
-    func configureCell(rawCell: UICollectionViewCell) {
-        if let resultCell = rawCell as? ImageResultCell {
-            resultCell.loading = true
-            populateViewWithImageThumbnail(resultCell.preview) {
-                resultCell.loading = false
-            }
-        }
-    }
-}

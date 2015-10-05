@@ -10,32 +10,26 @@ import UIKit
 import CoreData
 
 
-class SearchResultsViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UISearchBarDelegate, LoadMoreReusableViewDelegate {
+class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScrollViewDelegate {
     @IBOutlet var searchBar: UISearchBar!
-    @IBOutlet var collectionView: UICollectionView!
-    private let numSectionsEmpty = 0
-    private let numSectionsResults = 1
-    private let resultsSection = 0
+    @IBOutlet var scrollView: UIScrollView!
 
     private static let detailSegueID = "ImageDetail"
     private static let viewRecentsSegueID = "RecentSearches"
     private var imageSearch = ImageSearchController()
-    private var resultsToDisplay = [CollectionCellGenerator]()
+    private var resultsToDisplay = [ImageResult]()
+    private var resultViews = [ImageResultView]()
     private var minimumResultsToShow = 24
+    private var lastRequestedIndex = 0
     private var currentQuery: String?
     var currentSelection: ImageResult?
 
-    // UICollectionView layout parameters
-    private let cellSpacing: CGFloat = 2
-    private let cellsPerRow: CGFloat = 4
-    private let footerHeight: CGFloat = 50
-    private let collectionLayout: UICollectionViewFlowLayout = {
-        let layout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .Vertical
-        layout.minimumInteritemSpacing = 2
-        layout.minimumLineSpacing = 2
-        return layout
-    }()
+    private var imageSpacing: CGFloat = 2
+    private var maxImageWidth: CGFloat = 120
+    private var buttonHeight: CGFloat = 40
+    private var bottomReloadBuffer: CGFloat = 360
+    private var lastLoadRequest: NSTimeInterval = 0.0
+    private var minimumPauseBetweenLoadRequests: NSTimeInterval = 0.5
     static let managedObjectContext: NSManagedObjectContext = {
         let appDelegate = UIApplication.sharedApplication().delegate!
         return (appDelegate as! AppDelegate).managedObjectContext
@@ -48,20 +42,13 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
         searchBar.delegate = self
         searchBar.sizeToFit()
         searchBar.showsBookmarkButton = true
-//        searchBar.showsCancelButton = true
         searchBar.barTintColor = Color.primaryColor
         searchBar.tintColor = Color.secondaryColor
         searchBar.placeholder = NSLocalizedString("Image Search", comment: "Placeholder for main search bar")
         UITextField.appearanceWhenContainedInInstancesOfClasses([UISearchBar.self]).tintColor = Color.primaryColor
 
-        collectionView.delegate = self
-        collectionView.dataSource = self
-        collectionView.reloadData()
-
-        /* The following uses view.frame rather than collectionView.frame
-        because collectionView's size is not always updated by the time
-        viewDidLoad is called */
-        updateFlowLayoutForWidth(view.frame.width)
+        scrollView.delegate = self
+        layoutInScrollView(view.frame.width)
     }
 
     private func dismissKeyboard() {
@@ -69,17 +56,85 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
         searchBar.showsCancelButton = false
     }
 
-    private func updateFlowLayoutForWidth(width: CGFloat) {
-        let cellWidth = (width - (cellSpacing * (cellsPerRow - 1))) / cellsPerRow
-        collectionLayout.itemSize = CGSize(width: cellWidth, height: cellWidth)
-        collectionLayout.footerReferenceSize = CGSize(width: width, height: footerHeight)
-        collectionView.setCollectionViewLayout(collectionLayout, animated: true)
+    private func layoutInScrollView(width: CGFloat, startIndex: Int = 0) {
+        if resultsToDisplay.count > 0 {
+            let imageSize = CGSize(width: maxImageWidth, height: maxImageWidth)
+            let imPerRow = imagesPerRowForWidth(width)
+            let spacing = spacingForWidth(width, withImageCount: CGFloat(imPerRow))
+            let totalHeight = heightOfAllImages(resultsToDisplay.count, imagesPerRow: imPerRow, spacing: spacing, imageHeight: imageSize.height)
+            scrollView.contentSize = CGSizeMake(width, totalHeight)
+
+            var index = startIndex
+            var minX: CGFloat = 0
+            var minY: CGFloat = spacing
+            var resultView: ImageResultView
+            while index < resultsToDisplay.count {
+                let origin = CGPoint(x: minX, y: minY)
+                resultView = dequeueResultViewForIndex(index)
+                resultView.frame = CGRect(origin: origin, size: imageSize)
+                let object = resultsToDisplay[index]
+                if resultView.imageResult == nil || object != resultView.imageResult! {
+                    resultView.imageResult = object
+                }
+
+                index += 1
+                if index % imPerRow == 0 {
+                    minX = 0
+                    minY += spacing
+                    minY += imageSize.height
+                } else {
+                    minX += spacing
+                    minX += imageSize.width
+                }
+            }
+        }
+    }
+    private func imagesPerRowForWidth(width: CGFloat) -> Int {
+        return Int(width / maxImageWidth)
+    }
+    private func spacingForWidth(width: CGFloat, withImageCount count: CGFloat) -> CGFloat {
+        return (width - (count * maxImageWidth)) / count
+    }
+    private func heightOfAllImages(totalCount: Int, imagesPerRow: Int, spacing: CGFloat, imageHeight: CGFloat) -> CGFloat {
+        let numRows = ceil(CGFloat(totalCount) / CGFloat(imagesPerRow))
+        return numRows * (spacing + imageHeight)
+    }
+    private func dequeueResultViewForIndex(index: Int) -> ImageResultView {
+        if index < resultViews.count {
+            return resultViews[index]
+        }
+        let newResultView = NSBundle.mainBundle().loadNibNamed("ImageResultView", owner: self, options: nil).first as! ImageResultView
+        resultViews.append(newResultView)
+        scrollView.addSubview(newResultView)
+        return newResultView
+    }
+    private func removeResultViewsBeyondIndex(index: Int) {
+        if index < resultViews.count {
+            resultViews = Array(resultViews.dropLast(resultViews.count - index))
+        }
     }
 
     /* Overridden to ensure UISearchBar resizes properly on rotation */
     override func viewWillTransitionToSize(size: CGSize, withTransitionCoordinator coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransitionToSize(size, withTransitionCoordinator: coordinator)
-        updateFlowLayoutForWidth(size.width)
+        coordinator.animateAlongsideTransition({
+            (context) in
+                self.layoutInScrollView(size.width)
+            }, completion: nil)
+    }
+
+    // MARK: UIScrollViewDelegate
+    func scrollViewDidScroll(scrollView: UIScrollView) {
+        let now = NSDate().timeIntervalSince1970
+        if now > lastLoadRequest + minimumPauseBetweenLoadRequests {
+            lastLoadRequest = now
+            let totalHeight = scrollView.contentSize.height
+            let bottomY = scrollView.frame.height + scrollView.contentOffset.y
+            if bottomY + bottomReloadBuffer > totalHeight {
+                loadMore()
+            }
+        }
+
     }
 
     // MARK: UISearchBarDelegate
@@ -106,11 +161,11 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
         if queryString.characters.count > 0 {
             currentQuery = queryString
             resultsToDisplay = []
-            for i in 0..<(self.minimumResultsToShow / imageSearch.chunkSize) {
-                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), {
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), {
+                for i in 0..<(self.minimumResultsToShow / self.imageSearch.chunkSize) {
                     self.loadFromOffset(i * self.imageSearch.chunkSize)
-                })
-            }
+                }
+            })
         }
     }
     private func addQueryToHistory(rawQuery: String, clean cleanQuery: String) {
@@ -137,68 +192,29 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
         }
     }
 
-    // MARK: UICollectionViewDataSource
-    func numberOfSectionsInCollectionView(collectionView: UICollectionView) -> Int {
-        if resultsToDisplay.count == 0 {
-            return numSectionsEmpty
-        }
-        return numSectionsResults
-    }
-
-
-    func collectionView(collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        if section == resultsSection {
-            return resultsToDisplay.count
-        }
-        return 0
-    }
-
-    func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-        let objectForCell = resultsToDisplay[indexPath.item]
-        let cell = collectionView.dequeueReusableCellWithReuseIdentifier(objectForCell.cellIdentifier, forIndexPath: indexPath)
-        objectForCell.configureCell(cell)
-        return cell
-    }
-
-    func collectionView(collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, atIndexPath indexPath: NSIndexPath) -> UICollectionReusableView {
-        if indexPath.section == resultsSection {
-            let reusableView = collectionView.dequeueReusableSupplementaryViewOfKind(kind, withReuseIdentifier: LoadMoreReusableView.identifier, forIndexPath: indexPath)
-            if let loadMore = reusableView as? LoadMoreReusableView {
-                loadMore.delegate = self
-            }
-            return reusableView
-        }
-        return UICollectionReusableView()
-    }
-
-    // MARK: UICollectionViewDelegate
-    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
-        if indexPath.section == resultsSection && indexPath.item < resultsToDisplay.count {
-            currentSelection = resultsToDisplay[indexPath.item] as? ImageResult
-            performSegueWithIdentifier(SearchResultsViewController.detailSegueID, sender: self)
-        }
-    }
-
     // MARK: LoadMoreReusableViewDelegate
     func loadFromOffset(offset: Int) {
-        if let queryString = currentQuery {
-            imageSearch.queryForImages(query: queryString, withOffset: offset,{
-                (results: [ImageResult]?) in
-                if let results = results
-                    where queryString == self.currentQuery {
-                        // 'where' clause ensures we don't add results if they took too long
-                        // and the user has entered a new string before they've been displayed
-                        let trueResults = results.map({ $0 as CollectionCellGenerator}) // Keep the compiler happy
-                        self.resultsToDisplay += trueResults
-                        dispatch_async(dispatch_get_main_queue(), {
-                            self.collectionView.reloadData()
-                        })
-                }
-            })
+        if offset >= lastRequestedIndex {
+            lastRequestedIndex = offset + imageSearch.chunkSize
+            if let queryString = currentQuery {
+                imageSearch.queryForImages(query: queryString, withOffset: offset,{
+                    (results: [ImageResult]?) in
+                    if let results = results
+                        where queryString == self.currentQuery {
+                            // 'where' clause ensures we don't add results if they took too long
+                            // and the user has entered a new string before they've been displayed
+                            dispatch_async(dispatch_get_main_queue(), {
+                                self.resultsToDisplay += results
+                                self.layoutInScrollView(self.view.frame.width)
+                            })
+                    }
+                })
+            }
         }
     }
+
     func loadMore() {
-        loadFromOffset(resultsToDisplay.count)
+        loadFromOffset(lastRequestedIndex)
     }
 
     // MARK: Navigation
@@ -207,13 +223,18 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
             let detailVC = segue.destinationViewController as? ImageDetailViewController,
             let selectedImageResult = currentSelection {
                 detailVC.imageResult = selectedImageResult
-        } else if segue.identifier == RecentSearchesTableViewController.performSearchSegueID,
-            let recentSearchesTVC = sender as? RecentSearchesTableViewController,
+        }
+    }
+
+    @IBAction func closeRecentSearches(segue: UIStoryboardSegue) { }
+    @IBAction func performRecentSearch(segue: UIStoryboardSegue) {
+        if segue.identifier == RecentSearchesTableViewController.performSearchSegueID,
+            let recentSearchesTVC = segue.sourceViewController as? RecentSearchesTableViewController,
             let lastSearch = recentSearchesTVC.selectedSearch,
             let queryString = lastSearch.queryString {
+                searchBar.text = queryString
                 loadInitialSearch(queryString)
         }
     }
-    @IBAction func closeRecentSearches(segue: UIStoryboardSegue) { }
-    @IBAction func performRecentSearch(segue: UIStoryboardSegue) { }
+
 }

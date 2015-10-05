@@ -30,7 +30,6 @@ class ImageSearchController: NSObject {
                         completion(nil)
                         return
                     }
-                    NSLog("search/response/recieved")
                     do {
                         if let json = try NSJSONSerialization.JSONObjectWithData(data!, options: NSJSONReadingOptions.init(rawValue: 0)) as? [String: AnyObject],
                             let responseData = json[self.responseDataKey] as? [String : AnyObject],
