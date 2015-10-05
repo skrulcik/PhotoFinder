@@ -10,7 +10,7 @@ import UIKit
 import Foundation
 import CoreData
 
-class RecentSearchesTableViewController: UITableViewController, NSFetchedResultsControllerDelegate {
+class RecentSearchesTableViewController: UITableViewController, NSFetchedResultsControllerDelegate, UISearchResultsUpdating {
     static let cellIdentifier = "RecentSearchCell"
     static let performSearchSegueID = "PerformSearch"
     static let managedObjectContext: NSManagedObjectContext = {
@@ -19,6 +19,7 @@ class RecentSearchesTableViewController: UITableViewController, NSFetchedResults
         }()
     static let defaultBatchSize = 30
     var selectedSearch: RecentSearch?
+    var searchController = UISearchController(searchResultsController: nil)
     let fetchedResultsController: NSFetchedResultsController = {
         let request = NSFetchRequest(entityName: RecentSearch.entityName)
         request.sortDescriptors = [NSSortDescriptor(key: RecentSearch.dateKey, ascending: false)]
@@ -26,23 +27,33 @@ class RecentSearchesTableViewController: UITableViewController, NSFetchedResults
         let fetcher = NSFetchedResultsController(fetchRequest: request, managedObjectContext: RecentSearchesTableViewController.managedObjectContext, sectionNameKeyPath: nil, cacheName: nil)
         return fetcher
     }()
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.navigationItem.title = NSLocalizedString("Recent Searches", comment: "Title of Recent Searches Page")
+        navigationItem.title = NSLocalizedString("Recent Searches", comment: "Title of Recent Searches Page")
+
+        searchController.searchResultsUpdater = self
+        searchController.searchBar.sizeToFit()
+        searchController.hidesNavigationBarDuringPresentation = false
+        searchController.dimsBackgroundDuringPresentation = false
+        searchController.searchBar.barTintColor = Color.primaryColor
+        searchController.searchBar.tintColor = Color.secondaryColor
+        searchController.searchBar.showsCancelButton = false
+        searchController.searchBar.placeholder = NSLocalizedString("Search Recents", comment: "Search bar placeholder for recent searches screen")
+        UITextField.appearanceWhenContainedInInstancesOfClasses([UISearchBar.self]).tintColor = Color.primaryColor
+        tableView.tableHeaderView = searchController.searchBar
+
         fetchedResultsController.delegate = self
-        self.clearsSelectionOnViewWillAppear = false
-    }
-    override func viewWillAppear(animated: Bool) {
-        super.viewWillAppear(animated)
-        selectedSearch = nil
+        clearsSelectionOnViewWillAppear = false
+
         do {
             try fetchedResultsController.performFetch()
         } catch {
-            NSLog("recents/fetch/error \(error)")
+            NSLog("recents/fetch/initial/error \(error)")
         }
     }
 
-    // MARK: - Table view data source
+    // MARK: - TableViewDataSource
     override func numberOfSectionsInTableView(tableView: UITableView) -> Int {
         return 1
     }
@@ -65,42 +76,8 @@ class RecentSearchesTableViewController: UITableViewController, NSFetchedResults
         return cell
     }
 
-    /*
-    // Override to support conditional editing of the table view.
-    override func tableView(tableView: UITableView, canEditRowAtIndexPath indexPath: NSIndexPath) -> Bool {
-        // Return false if you do not want the specified item to be editable.
-        return true
-    }
-    */
-
-    /*
-    // Override to support editing the table view.
-    override func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
-        if editingStyle == .Delete {
-            // Delete the row from the data source
-            tableView.deleteRowsAtIndexPaths([indexPath], withRowAnimation: .Fade)
-        } else if editingStyle == .Insert {
-            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-        }    
-    }
-    */
-
-
-
-    // MARK: - Navigation
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        if segue.identifier == RecentSearchesTableViewController.performSearchSegueID {
-            if let cell = sender as? UITableViewCell,
-                let selectedIndex = tableView.indexPathForCell(cell),
-                let recentSearch = fetchedResultsController.objectAtIndexPath(selectedIndex) as? RecentSearch {
-                    selectedSearch = recentSearch
-            }
-        }
-    }
-
-    // MARK: Fetched Results Controller Delegate
+    // MARK: FetchedResultsControllerDelegate
     func controllerWillChangeContent(controller: NSFetchedResultsController) {
-        print("Begin updates")
         tableView.beginUpdates()
     }
     func controllerDidChangeContent(controller: NSFetchedResultsController) {
@@ -116,6 +93,31 @@ class RecentSearchesTableViewController: UITableViewController, NSFetchedResults
         }
     }
 
+    // MARK: UISearchResultsUpdating
+    func updateSearchResultsForSearchController(searchController: UISearchController) {
+        print("Update")
+        if let partialQuery = searchController.searchBar.text
+            where partialQuery.characters.count > 0 {
+                fetchedResultsController.fetchRequest.predicate = NSPredicate(format: "\(RecentSearch.displayStringKey) LIKE[c] %@", partialQuery + "*")
+            do {
+                NSFetchedResultsController.deleteCacheWithName(fetchedResultsController.cacheName)
+                try fetchedResultsController.performFetch()
+                tableView.reloadData()
+            } catch {
+                NSLog("recents/fetch/instant-filter/error \(error)")
+            }
+        }
+    }
 
+    // MARK: - Navigation
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        if segue.identifier == RecentSearchesTableViewController.performSearchSegueID {
+            if let cell = sender as? UITableViewCell,
+                let selectedIndex = tableView.indexPathForCell(cell),
+                let recentSearch = fetchedResultsController.objectAtIndexPath(selectedIndex) as? RecentSearch {
+                    selectedSearch = recentSearch
+            }
+        }
+    }
 
 }

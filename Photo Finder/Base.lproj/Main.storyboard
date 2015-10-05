@@ -56,7 +56,7 @@
                                     <outlet property="delegate" destination="Pvr-2Y-myk" id="QPb-dg-wUM"/>
                                 </connections>
                             </searchBar>
-                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="vVp-EY-QCB">
+                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" showsHorizontalScrollIndicator="NO" indicatorStyle="black" maximumZoomScale="3" translatesAutoresizingMaskIntoConstraints="NO" id="vVp-EY-QCB">
                                 <rect key="frame" x="0.0" y="44" width="600" height="492"/>
                                 <animations/>
                             </scrollView>
@@ -90,13 +90,13 @@
             <objects>
                 <tableViewController id="0Pb-6O-AMa" customClass="RecentSearchesTableViewController" customModule="Photo_Finder" customModuleProvider="target" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" id="EII-2P-OOq">
-                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <rect key="frame" x="0.0" y="64" width="600" height="536"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <animations/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <prototypes>
                             <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="RecentSearchCell" textLabel="sHS-Iy-uBB" detailTextLabel="xSv-jx-pxD" style="IBUITableViewCellStyleValue1" id="nPP-0Q-RIj">
-                                <rect key="frame" x="0.0" y="92" width="600" height="44"/>
+                                <rect key="frame" x="0.0" y="28" width="600" height="44"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="nPP-0Q-RIj" id="uSe-Fk-OjO">
                                     <rect key="frame" x="0.0" y="0.0" width="600" height="43"/>
@@ -133,7 +133,7 @@
                         </connections>
                     </tableView>
                     <navigationItem key="navigationItem" title="Recent Searches" id="AYn-tj-iTt">
-                        <barButtonItem key="rightBarButtonItem" style="plain" systemItem="done" id="htx-ly-QBS">
+                        <barButtonItem key="rightBarButtonItem" style="done" systemItem="done" id="htx-ly-QBS">
                             <connections>
                                 <segue destination="cd4-Ub-0GT" kind="unwind" unwindAction="closeRecentSearches:" id="cFK-o1-jik"/>
                             </connections>
@@ -220,7 +220,7 @@
             <objects>
                 <navigationController automaticallyAdjustsScrollViewInsets="NO" id="ajA-bg-pOK" sceneMemberID="viewController">
                     <toolbarItems/>
-                    <navigationBar key="navigationBar" contentMode="scaleToFill" barStyle="black" id="8sN-6d-RRG">
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" barStyle="black" translucent="NO" id="8sN-6d-RRG">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <animations/>

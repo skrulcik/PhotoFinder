@@ -26,14 +26,9 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
 
     private var imageSpacing: CGFloat = 2
     private var maxImageWidth: CGFloat = 120
-    private var buttonHeight: CGFloat = 40
-    private var bottomReloadBuffer: CGFloat = 360
+    private var bottomReloadBuffer: CGFloat = 300
     private var lastLoadRequest: NSTimeInterval = 0.0
     private var minimumPauseBetweenLoadRequests: NSTimeInterval = 0.5
-    static let managedObjectContext: NSManagedObjectContext = {
-        let appDelegate = UIApplication.sharedApplication().delegate!
-        return (appDelegate as! AppDelegate).managedObjectContext
-        }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -87,6 +82,7 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
                     minX += imageSize.width
                 }
             }
+//            removeResultViewsBeyondIndex(resultsToDisplay.count)
         }
     }
     private func imagesPerRowForWidth(width: CGFloat) -> Int {
@@ -150,7 +146,7 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
         dismissKeyboard()
         if let rawText = searchBar.text {
             let queryString = rawText.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
-            addQueryToHistory(rawText, clean: queryString)
+            imageSearch.addQueryToHistory(rawText, clean: queryString)
             loadInitialSearch(queryString)
         }
     }
@@ -161,34 +157,12 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
         if queryString.characters.count > 0 {
             currentQuery = queryString
             resultsToDisplay = []
+            lastRequestedIndex = 0
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), {
                 for i in 0..<(self.minimumResultsToShow / self.imageSearch.chunkSize) {
                     self.loadFromOffset(i * self.imageSearch.chunkSize)
                 }
             })
-        }
-    }
-    private func addQueryToHistory(rawQuery: String, clean cleanQuery: String) {
-        let request = NSFetchRequest(entityName: RecentSearch.entityName)
-        request.fetchBatchSize = 1 // Should only be one of each query
-        request.predicate = NSPredicate(format: "displayString == %s", rawQuery)
-        do {
-            let objs = try SearchResultsViewController.managedObjectContext.executeFetchRequest(request)
-            if let matches = objs as? [RecentSearch],
-                let otherSearch = matches.first {
-                    otherSearch.lastSearchDate = NSDate().timeIntervalSince1970
-            } else {
-                if let description = NSEntityDescription.entityForName(RecentSearch.entityName, inManagedObjectContext: SearchResultsViewController.managedObjectContext),
-                let newSearch = NSManagedObject(entity: description, insertIntoManagedObjectContext: SearchResultsViewController.managedObjectContext) as? RecentSearch {
-                    newSearch.lastSearchDate = NSDate().timeIntervalSince1970
-                    newSearch.displayString = rawQuery
-                    newSearch.queryString = cleanQuery
-                }
-            }
-            NSLog("search/history/update \(rawQuery)")
-            (UIApplication.sharedApplication().delegate as! AppDelegate).saveContext()
-        } catch {
-            NSLog("search/history/add-query/error \(error)")
         }
     }
 
