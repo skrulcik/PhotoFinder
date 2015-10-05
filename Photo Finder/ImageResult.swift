@@ -25,11 +25,21 @@ class ImageResult: NSObject {
         case ThumbnailURL = "tbUrl"
         case ImageURL = "url"
         case HumanReadableURL = "visibleUrl"
-        static let requiredKeys = [ThumbnailURL, ImageURL, HumanReadableURL]
+        case Title = "titleNoFormatting"
+        case Description = "contentNoFormatting"
+        static let requiredKeys = [ThumbnailURL, ImageURL, HumanReadableURL, Title, Description]
     }
     private var properties: [Key : AnyObject]
     private var thumbnail: UIImage?
     private var fullImage: UIImage?
+    var imageTitle: String {
+        return properties[.Title] as! String
+    }
+    var imageDescription: String {
+        let url = properties[.HumanReadableURL] as! String
+        let info = properties[.Description] as! String
+        return "\(url)\n\(info)"
+    }
 
 
     class func fromList(jsonList: [[String : AnyObject]]) -> [ImageResult] {

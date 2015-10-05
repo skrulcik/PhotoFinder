@@ -12,6 +12,7 @@ class ImageSearchController: NSObject {
     private var urlSession: NSURLSession
     private var responseDataKey = "responseData"
     private var imageResultListKey = "results"
+    let chunkSize = 6 // Must be between 4 and 8
 
     override init() {
         let urlConfig = NSURLSessionConfiguration.defaultSessionConfiguration()
@@ -22,7 +23,7 @@ class ImageSearchController: NSObject {
     func queryForImages(query dirtyQueryString:String, withOffset offset:Int, _ completion: ([ImageResult]? -> Void)) {
         print("Requestion items from offset \(offset)")
         if let queryString = dirtyQueryString.stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet()),
-            let queryURL = NSURL(string: "https://ajax.googleapis.com/ajax/services/search/images?v=1.0&rsz=8&q=\(queryString)&start=\(offset)") {
+            let queryURL = NSURL(string: "https://ajax.googleapis.com/ajax/services/search/images?v=1.0&rsz=\(chunkSize)&q=\(queryString)&start=\(offset)") {
                 let queryTask = urlSession.dataTaskWithURL(queryURL, completionHandler:{
                     (data: NSData?, response: NSURLResponse?, error: NSError?) in
                     guard data != nil && response != nil else {

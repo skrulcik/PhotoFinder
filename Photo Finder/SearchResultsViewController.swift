@@ -17,10 +17,13 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
     private let numSectionsResults = 1
     private let resultsSection = 0
 
+    private static let detailSegueID = "ImageDetail"
     private var searchController = UISearchController(searchResultsController: nil)
     private var imageSearch = ImageSearchController()
     private var resultsToDisplay = [CollectionCellGenerator]()
+    private var minimumResultsToShow = 24
     private var currentQuery: String?
+    var currentSelection: ImageResult?
 
     // UICollectionView layout parameters
     private let cellSpacing: CGFloat = 2
@@ -43,6 +46,7 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
         searchController.searchBar.delegate = self
         searchController.searchBar.sizeToFit()
         searchController.searchBar.showsBookmarkButton = true
+        searchController.searchBar.showsCancelButton = false
         searchController.searchBar.barTintColor = Color.primaryColor
         searchController.searchBar.tintColor = Color.secondaryColor
         UITextField.appearanceWhenContainedInInstancesOfClasses([UISearchBar.self]).tintColor = Color.primaryColor
@@ -78,6 +82,16 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
             }, completion: nil)
         updateFlowLayoutForWidth(size.width)
     }
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        searchBarWrapper.hidden = true
+        searchController.searchBar.hidden = true
+    }
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        searchBarWrapper.hidden = false
+        searchController.searchBar.hidden = false
+    }
 
     // MARK: UISearchResultsUpdating
     func updateSearchResultsForSearchController(searchController: UISearchController) {
@@ -92,20 +106,16 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
     func searchBarTextDidEndEditing(searchBar: UISearchBar) {
         if let rawText = searchBar.text {
             let queryString = rawText.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
-            if queryString.characters.count > 0 {
-                currentQuery = queryString
-                imageSearch.queryForImages(query: queryString, withOffset: 0 ,{
-                    (results: [ImageResult]?) in
-                    if let results = results
-                        where queryString == self.currentQuery {
-                            // 'where' clause ensures we don't add results if they took too long
-                            // and the user has entered a new string before they've been displayed
-                            let trueResults = results.map({ $0 as CollectionCellGenerator}) // Keep the compiler happy
-                            self.resultsToDisplay = trueResults
-                            dispatch_async(dispatch_get_main_queue(), {
-                                self.collectionView.reloadData()
-                            })
-                    }
+            loadInitialSearch(queryString)
+        }
+    }
+    func loadInitialSearch(queryString: String, resultCount: Int = 0) {
+        if queryString.characters.count > 0 {
+            currentQuery = queryString
+            resultsToDisplay = []
+            for i in 0..<(self.minimumResultsToShow / imageSearch.chunkSize) {
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), {
+                    self.loadFromOffset(i * self.imageSearch.chunkSize)
                 })
             }
         }
@@ -146,14 +156,16 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
     }
 
     // MARK: UICollectionViewDelegate
-    func collectionView(collectionView: UICollectionView, shouldSelectItemAtIndexPath indexPath: NSIndexPath) -> Bool {
-        return false
+    func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
+        if indexPath.section == resultsSection && indexPath.item < resultsToDisplay.count {
+            currentSelection = resultsToDisplay[indexPath.item] as? ImageResult
+            performSegueWithIdentifier(SearchResultsViewController.detailSegueID, sender: self)
+        }
     }
 
     // MARK: LoadMoreReusableViewDelegate
-    func loadMore() {
+    func loadFromOffset(offset: Int) {
         if let queryString = currentQuery {
-            let offset = resultsToDisplay.count
             imageSearch.queryForImages(query: queryString, withOffset: offset,{
                 (results: [ImageResult]?) in
                 if let results = results
@@ -169,5 +181,16 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
             })
         }
     }
+    func loadMore() {
+        loadFromOffset(resultsToDisplay.count)
+    }
 
+    // MARK: Navigation
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        if segue.identifier == SearchResultsViewController.detailSegueID,
+            let detailVC = segue.destinationViewController as? ImageDetailViewController,
+            let selectedImageResult = currentSelection {
+                detailVC.imageResult = selectedImageResult
+        }
+    }
 }

@@ -19,6 +19,8 @@
 		D20C63721BC068FD0049366C /* CollectionCellGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20C63711BC068FD0049366C /* CollectionCellGenerator.swift */; };
 		D20C63751BC07B920049366C /* UISearchController+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20C63741BC07B920049366C /* UISearchController+Extensions.swift */; };
 		D20C63771BC07CE50049366C /* Color.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20C63761BC07CE50049366C /* Color.swift */; };
+		D2D5533E1BC20E9E007D2E55 /* LoadMoreReusableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D5533D1BC20E9E007D2E55 /* LoadMoreReusableView.swift */; };
+		D2D553401BC2225F007D2E55 /* ImageDetailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2D5533F1BC2225F007D2E55 /* ImageDetailViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +38,8 @@
 		D20C63711BC068FD0049366C /* CollectionCellGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CollectionCellGenerator.swift; sourceTree = "<group>"; };
 		D20C63741BC07B920049366C /* UISearchController+Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UISearchController+Extensions.swift"; sourceTree = "<group>"; };
 		D20C63761BC07CE50049366C /* Color.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Color.swift; sourceTree = "<group>"; };
+		D2D5533D1BC20E9E007D2E55 /* LoadMoreReusableView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoadMoreReusableView.swift; sourceTree = "<group>"; };
+		D2D5533F1BC2225F007D2E55 /* ImageDetailViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ImageDetailViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -89,6 +93,7 @@
 				D208E0F81BC08BCC000699C4 /* ImageSearchController.swift */,
 				D20C636E1BC067920049366C /* SearchResultsViewController.swift */,
 				D20C63741BC07B920049366C /* UISearchController+Extensions.swift */,
+				D2D5533F1BC2225F007D2E55 /* ImageDetailViewController.swift */,
 			);
 			name = Controllers;
 			sourceTree = "<group>";
@@ -105,6 +110,7 @@
 			isa = PBXGroup;
 			children = (
 				D208E0F41BC08695000699C4 /* ImageResultCell.swift */,
+				D2D5533D1BC20E9E007D2E55 /* LoadMoreReusableView.swift */,
 			);
 			name = Views;
 			sourceTree = "<group>";
@@ -181,10 +187,12 @@
 			files = (
 				D20C63621BC066940049366C /* Photo_Finder.xcdatamodeld in Sources */,
 				D20C636F1BC067920049366C /* SearchResultsViewController.swift in Sources */,
+				D2D553401BC2225F007D2E55 /* ImageDetailViewController.swift in Sources */,
 				D208E0F61BC08695000699C4 /* ImageResultCell.swift in Sources */,
 				D208E0F91BC08BCC000699C4 /* ImageSearchController.swift in Sources */,
 				D20C63751BC07B920049366C /* UISearchController+Extensions.swift in Sources */,
 				D20C635A1BC066940049366C /* AppDelegate.swift in Sources */,
+				D2D5533E1BC20E9E007D2E55 /* LoadMoreReusableView.swift in Sources */,
 				D20C63721BC068FD0049366C /* CollectionCellGenerator.swift in Sources */,
 				D208E0FD1BC09482000699C4 /* ImageResult.swift in Sources */,
 				D20C63771BC07CE50049366C /* Color.swift in Sources */,
