@@ -28,6 +28,8 @@ class ImageResult: NSObject {
         static let requiredKeys = [ThumbnailURL, ImageURL, HumanReadableURL]
     }
     private var properties: [Key : AnyObject]
+    private var thumbnail: UIImage?
+    private var fullImage: UIImage?
 
 
     class func fromList(jsonList: [[String : AnyObject]]) -> [ImageResult] {
@@ -58,15 +60,32 @@ class ImageResult: NSObject {
         }
     }
 
-    func populateViewWithImage(imageView: UIImageView) {
-        populateView(imageView, .ImageURL)
+    /**
+    Downloads full image (if necessary) and populates the given UIImageView
+    Completion handler is only called on success
+    */
+    func populateViewWithImage(imageView: UIImageView, completion: (Void -> Void)? = nil) {
+        if let fullImage = fullImage {
+            imageView.image = fullImage
+            completion?()
+        } else {
+            populateViewFromURL(imageView, .ImageURL, completion: completion)
+        }
     }
-    func populateViewWithImageThumbnail(imageView: UIImageView) {
-        populateView(imageView, .ThumbnailURL)
+    /**
+    Downloads thumbnail (if necessary) and populates the given UIImageView
+    Completion handler is only called on success
+    */
+    func populateViewWithImageThumbnail(imageView: UIImageView, completion: (Void -> Void)? = nil) {
+        if let thumbnail = thumbnail {
+            imageView.image = thumbnail
+            completion?()
+        } else {
+            populateViewFromURL(imageView, .ThumbnailURL, completion: completion)
+        }
     }
-    private func populateView(imageView: UIImageView, _ urlKey: Key) {
+    private func populateViewFromURL(imageView: UIImageView, _ urlKey: Key, completion: (Void -> Void)? = nil) {
         if let imageURL = NSURL(string: properties[urlKey] as! String) {
-            NSLog("ImageURL: \(imageURL)")
             let sessionConfig = NSURLSessionConfiguration.defaultSessionConfiguration()
             let session = NSURLSession(configuration: sessionConfig)
             let imageDownload = session.downloadTaskWithURL(imageURL, completionHandler: {
@@ -74,8 +93,14 @@ class ImageResult: NSObject {
                 if let imageLocation = imageLocation,
                     let imageData = NSData(contentsOfURL: imageLocation),
                     let image = UIImage(data: imageData) {
+                        if urlKey == .ThumbnailURL {
+                            self.thumbnail = image
+                        } else if urlKey == .ImageURL {
+                            self.fullImage = image
+                        }
                         dispatch_async(dispatch_get_main_queue(), {
                             imageView.image = image
+                            completion?()
                         })
                 } else {
                     NSLog("result/configure-cell/download/error Image Coulndn't be created")
@@ -96,7 +121,10 @@ extension ImageResult: CollectionCellGenerator {
 
     func configureCell(rawCell: UICollectionViewCell) {
         if let resultCell = rawCell as? ImageResultCell {
-            populateViewWithImageThumbnail(resultCell.preview)
+            resultCell.loading = true
+            populateViewWithImageThumbnail(resultCell.preview) {
+                resultCell.loading = false
+            }
         }
     }
 }

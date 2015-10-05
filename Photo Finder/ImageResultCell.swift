@@ -11,4 +11,15 @@ import UIKit
 class ImageResultCell: UICollectionViewCell {
     static let identifier = "ImageResultCell"
     @IBOutlet var preview: UIImageView!
+    @IBOutlet var pinwheel: UIActivityIndicatorView!
+    var loading: Bool = false {
+        didSet {
+            if loading {
+                preview.image = nil
+                pinwheel.startAnimating()
+            } else {
+                pinwheel.stopAnimating()
+            }
+        }
+    }
 }

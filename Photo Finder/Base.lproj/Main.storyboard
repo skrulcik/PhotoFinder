@@ -2,6 +2,7 @@
 <document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="9046" systemVersion="15A279b" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" initialViewController="yhJ-sP-8Cb">
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="9035"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
     </dependencies>
     <scenes>
         <!--Navigation Controller-->
@@ -59,7 +60,7 @@
                                         <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="2" minimumInteritemSpacing="2" id="BRf-8U-E3w">
                                             <size key="itemSize" width="100" height="88"/>
                                             <size key="headerReferenceSize" width="0.0" height="0.0"/>
-                                            <size key="footerReferenceSize" width="0.0" height="0.0"/>
+                                            <size key="footerReferenceSize" width="50" height="50"/>
                                             <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
                                         </collectionViewFlowLayout>
                                         <cells>
@@ -74,6 +75,10 @@
                                                             <rect key="frame" x="0.0" y="0.0" width="100" height="88"/>
                                                             <animations/>
                                                         </imageView>
+                                                        <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" animating="YES" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="c8g-4e-69Q">
+                                                            <rect key="frame" x="40" y="34" width="20" height="20"/>
+                                                            <animations/>
+                                                        </activityIndicatorView>
                                                     </subviews>
                                                     <animations/>
                                                     <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="calibratedWhite"/>
@@ -85,12 +90,41 @@
                                                     <constraint firstAttribute="trailing" secondItem="8nX-NS-hks" secondAttribute="trailing" id="bMP-y8-7tJ"/>
                                                     <constraint firstAttribute="bottom" secondItem="8nX-NS-hks" secondAttribute="bottom" id="fRZ-Tp-pZB"/>
                                                     <constraint firstItem="8nX-NS-hks" firstAttribute="leading" secondItem="McJ-MH-QN3" secondAttribute="leading" id="jgj-Po-AXG"/>
+                                                    <constraint firstItem="c8g-4e-69Q" firstAttribute="centerY" secondItem="McJ-MH-QN3" secondAttribute="centerY" id="ksZ-sr-tYT"/>
+                                                    <constraint firstItem="c8g-4e-69Q" firstAttribute="centerX" secondItem="McJ-MH-QN3" secondAttribute="centerX" id="zbs-aL-Btk"/>
                                                 </constraints>
                                                 <connections>
+                                                    <outlet property="pinwheel" destination="c8g-4e-69Q" id="f4y-e5-3pT"/>
                                                     <outlet property="preview" destination="8nX-NS-hks" id="DBF-bg-h7u"/>
                                                 </connections>
                                             </collectionViewCell>
                                         </cells>
+                                        <collectionReusableView key="sectionFooterView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" reuseIdentifier="LoadMore" id="juj-05-hXS" customClass="LoadMoreReusableView" customModule="Photo_Finder" customModuleProvider="target">
+                                            <rect key="frame" x="0.0" y="88" width="600" height="50"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="bf7-7L-xBb">
+                                                    <rect key="frame" x="8" y="10" width="584" height="30"/>
+                                                    <animations/>
+                                                    <state key="normal" title="Load More">
+                                                        <color key="titleColor" red="0.11762374640000001" green="0.50324428080000005" blue="0.9395608902" alpha="1" colorSpace="calibratedRGB"/>
+                                                    </state>
+                                                    <connections>
+                                                        <action selector="loadMorePressed" destination="juj-05-hXS" eventType="touchUpInside" id="FxH-pW-T8C"/>
+                                                    </connections>
+                                                </button>
+                                            </subviews>
+                                            <animations/>
+                                            <constraints>
+                                                <constraint firstAttribute="bottomMargin" secondItem="bf7-7L-xBb" secondAttribute="bottom" constant="2" id="BkE-8H-tDl"/>
+                                                <constraint firstAttribute="leadingMargin" secondItem="bf7-7L-xBb" secondAttribute="leading" id="jmf-0s-h0u"/>
+                                                <constraint firstAttribute="trailingMargin" secondItem="bf7-7L-xBb" secondAttribute="trailing" id="pzR-WO-uia"/>
+                                                <constraint firstItem="bf7-7L-xBb" firstAttribute="top" secondItem="juj-05-hXS" secondAttribute="topMargin" constant="2" id="uYR-0h-Mbb"/>
+                                            </constraints>
+                                            <connections>
+                                                <outlet property="loadButton" destination="bf7-7L-xBb" id="JX9-uo-pJn"/>
+                                            </connections>
+                                        </collectionReusableView>
                                     </collectionView>
                                 </subviews>
                                 <animations/>

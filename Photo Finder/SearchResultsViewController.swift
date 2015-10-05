@@ -10,7 +10,7 @@ import UIKit
 
 
 
-class SearchResultsViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UISearchResultsUpdating, UISearchBarDelegate {
+class SearchResultsViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UISearchResultsUpdating, UISearchBarDelegate, LoadMoreReusableViewDelegate {
     @IBOutlet var searchBarWrapper: UIView!
     @IBOutlet var collectionView: UICollectionView!
     private let numSectionsEmpty = 0
@@ -20,10 +20,12 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
     private var searchController = UISearchController(searchResultsController: nil)
     private var imageSearch = ImageSearchController()
     private var resultsToDisplay = [CollectionCellGenerator]()
+    private var currentQuery: String?
 
     // UICollectionView layout parameters
     private let cellSpacing: CGFloat = 2
     private let cellsPerRow: CGFloat = 4
+    private let footerHeight: CGFloat = 50
     private let collectionLayout: UICollectionViewFlowLayout = {
         let layout = UICollectionViewFlowLayout()
         layout.scrollDirection = .Vertical
@@ -60,6 +62,7 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
     private func updateFlowLayoutForWidth(width: CGFloat) {
         let cellWidth = (width - (cellSpacing * (cellsPerRow - 1))) / cellsPerRow
         collectionLayout.itemSize = CGSize(width: cellWidth, height: cellWidth)
+        collectionLayout.footerReferenceSize = CGSize(width: width, height: footerHeight)
         collectionView.setCollectionViewLayout(collectionLayout, animated: true)
     }
 
@@ -90,13 +93,18 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
         if let rawText = searchBar.text {
             let queryString = rawText.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
             if queryString.characters.count > 0 {
-                imageSearch.queryForImages(query: queryString, {
+                currentQuery = queryString
+                imageSearch.queryForImages(query: queryString, withOffset: 0 ,{
                     (results: [ImageResult]?) in
-                    if let results = results {
-                        self.resultsToDisplay = results.map({ $0 as CollectionCellGenerator})
-                        dispatch_async(dispatch_get_main_queue(), {
-                            self.collectionView.reloadData()
-                        })
+                    if let results = results
+                        where queryString == self.currentQuery {
+                            // 'where' clause ensures we don't add results if they took too long
+                            // and the user has entered a new string before they've been displayed
+                            let trueResults = results.map({ $0 as CollectionCellGenerator}) // Keep the compiler happy
+                            self.resultsToDisplay = trueResults
+                            dispatch_async(dispatch_get_main_queue(), {
+                                self.collectionView.reloadData()
+                            })
                     }
                 })
             }
@@ -120,10 +128,21 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
     }
 
     func collectionView(collectionView: UICollectionView, cellForItemAtIndexPath indexPath: NSIndexPath) -> UICollectionViewCell {
-        let objectForCell = resultsToDisplay[indexPath.row]
+        let objectForCell = resultsToDisplay[indexPath.item]
         let cell = collectionView.dequeueReusableCellWithReuseIdentifier(objectForCell.cellIdentifier, forIndexPath: indexPath)
         objectForCell.configureCell(cell)
         return cell
+    }
+
+    func collectionView(collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, atIndexPath indexPath: NSIndexPath) -> UICollectionReusableView {
+        if indexPath.section == resultsSection {
+            let reusableView = collectionView.dequeueReusableSupplementaryViewOfKind(kind, withReuseIdentifier: LoadMoreReusableView.identifier, forIndexPath: indexPath)
+            if let loadMore = reusableView as? LoadMoreReusableView {
+                loadMore.delegate = self
+            }
+            return reusableView
+        }
+        return UICollectionReusableView()
     }
 
     // MARK: UICollectionViewDelegate
@@ -131,5 +150,24 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
         return false
     }
 
+    // MARK: LoadMoreReusableViewDelegate
+    func loadMore() {
+        if let queryString = currentQuery {
+            let offset = resultsToDisplay.count
+            imageSearch.queryForImages(query: queryString, withOffset: offset,{
+                (results: [ImageResult]?) in
+                if let results = results
+                    where queryString == self.currentQuery {
+                        // 'where' clause ensures we don't add results if they took too long
+                        // and the user has entered a new string before they've been displayed
+                        let trueResults = results.map({ $0 as CollectionCellGenerator}) // Keep the compiler happy
+                        self.resultsToDisplay += trueResults
+                        dispatch_async(dispatch_get_main_queue(), {
+                            self.collectionView.reloadData()
+                        })
+                }
+            })
+        }
+    }
 
 }
