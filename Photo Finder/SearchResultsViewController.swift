@@ -73,7 +73,7 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
                 }
 
                 let tapForInfo = UITapGestureRecognizer(target: self, action: "showImageDetail:")
-                tapForInfo.numberOfTapsRequired = 2
+                tapForInfo.numberOfTapsRequired = 1
                 tapForInfo.numberOfTouchesRequired = 1
                 resultView.addGestureRecognizer(tapForInfo)
 
