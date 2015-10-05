@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model name="Test1.xcdatamodel" userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="1" systemVersion="11A491" minimumToolsVersion="Automatic" macOSVersion="Automatic" iOSVersion="Automatic">
-    <elements/>
+<model userDefinedModelVersionIdentifier="" type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="9048" systemVersion="15A279b" minimumToolsVersion="Automatic">
+    <entity name="RecentSearch" representedClassName=".RecentSearch" syncable="YES">
+        <attribute name="displayString" attributeType="String" indexed="YES" syncable="YES"/>
+        <attribute name="lastSearchDate" attributeType="Date" indexed="YES" syncable="YES"/>
+        <attribute name="queryString" attributeType="String" syncable="YES"/>
+    </entity>
+    <elements>
+        <element name="RecentSearch" positionX="-63" positionY="-18" width="128" height="88"/>
+    </elements>
 </model>

@@ -47,14 +47,6 @@
                         <rect key="frame" x="0.0" y="64" width="600" height="536"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <view contentMode="scaleAspectFit" translatesAutoresizingMaskIntoConstraints="NO" id="PgR-rJ-Ii8" userLabel="SearchBarWrapper">
-                                <rect key="frame" x="0.0" y="0.0" width="600" height="44"/>
-                                <animations/>
-                                <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="44" id="RS6-jH-zLk"/>
-                                </constraints>
-                            </view>
                             <stackView opaque="NO" contentMode="scaleToFill" axis="vertical" translatesAutoresizingMaskIntoConstraints="NO" id="EJp-pA-N8U">
                                 <rect key="frame" x="0.0" y="44" width="600" height="492"/>
                                 <subviews>
@@ -134,17 +126,26 @@
                                 </subviews>
                                 <animations/>
                             </stackView>
+                            <searchBar contentMode="redraw" searchBarStyle="prominent" showsBookmarkButton="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XrM-En-nDY">
+                                <rect key="frame" x="0.0" y="0.0" width="600" height="44"/>
+                                <animations/>
+                                <color key="barTintColor" red="0.11762374640000001" green="0.50324428080000005" blue="0.9395608902" alpha="1" colorSpace="calibratedRGB"/>
+                                <textInputTraits key="textInputTraits" autocorrectionType="yes" returnKeyType="search" enablesReturnKeyAutomatically="YES"/>
+                                <connections>
+                                    <outlet property="delegate" destination="Pvr-2Y-myk" id="QPb-dg-wUM"/>
+                                </connections>
+                            </searchBar>
                         </subviews>
                         <animations/>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstItem="EJp-pA-N8U" firstAttribute="top" secondItem="ORd-Kl-dPG" secondAttribute="bottom" id="5mL-rh-R4A"/>
-                            <constraint firstAttribute="trailing" secondItem="PgR-rJ-Ii8" secondAttribute="trailing" id="6ns-iQ-kEy"/>
-                            <constraint firstItem="PgR-rJ-Ii8" firstAttribute="top" secondItem="ORd-Kl-dPG" secondAttribute="bottom" id="KRb-5h-KVR"/>
+                            <constraint firstItem="m5v-3t-d8A" firstAttribute="top" secondItem="XrM-En-nDY" secondAttribute="bottom" id="F8p-cy-UVY"/>
+                            <constraint firstItem="XrM-En-nDY" firstAttribute="leading" secondItem="sHy-BU-gkf" secondAttribute="leading" id="Kij-VF-wp1"/>
                             <constraint firstAttribute="bottom" secondItem="EJp-pA-N8U" secondAttribute="bottom" id="O4z-Fo-Y5i"/>
-                            <constraint firstItem="PgR-rJ-Ii8" firstAttribute="leading" secondItem="sHy-BU-gkf" secondAttribute="leading" id="axf-NP-zFE"/>
+                            <constraint firstItem="XrM-En-nDY" firstAttribute="top" secondItem="ORd-Kl-dPG" secondAttribute="bottom" id="PlY-aA-ohH"/>
+                            <constraint firstAttribute="trailing" secondItem="XrM-En-nDY" secondAttribute="trailing" id="bZc-dW-MIA"/>
                             <constraint firstItem="EJp-pA-N8U" firstAttribute="leading" secondItem="sHy-BU-gkf" secondAttribute="leading" id="n8S-4D-zme"/>
-                            <constraint firstItem="EJp-pA-N8U" firstAttribute="top" secondItem="PgR-rJ-Ii8" secondAttribute="bottom" id="nfw-7o-nHk"/>
                             <constraint firstAttribute="trailing" secondItem="EJp-pA-N8U" secondAttribute="trailing" id="w4l-J5-imu"/>
                         </constraints>
                         <variation key="default">
@@ -156,13 +157,74 @@
                     <navigationItem key="navigationItem" title="Photo Finder" id="WIB-QN-KIM"/>
                     <connections>
                         <outlet property="collectionView" destination="m5v-3t-d8A" id="aZe-0j-FKC"/>
-                        <outlet property="searchBarWrapper" destination="PgR-rJ-Ii8" id="gVo-6b-mIb"/>
+                        <outlet property="searchBar" destination="XrM-En-nDY" id="c2T-kW-cca"/>
                         <segue destination="eMx-sp-pxB" kind="show" identifier="ImageDetail" id="sVx-9I-KYS"/>
+                        <segue destination="ajA-bg-pOK" kind="showDetail" identifier="RecentSearches" id="oLF-Br-Ugk"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="C6B-rn-z7b" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
             <point key="canvasLocation" x="1349" y="1150"/>
+        </scene>
+        <!--Recent Searches-->
+        <scene sceneID="Oaa-oM-mhZ">
+            <objects>
+                <tableViewController id="0Pb-6O-AMa" customClass="RecentSearchesTableViewController" customModule="Photo_Finder" customModuleProvider="target" sceneMemberID="viewController">
+                    <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="28" sectionFooterHeight="28" id="EII-2P-OOq">
+                        <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <animations/>
+                        <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <prototypes>
+                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="RecentSearchCell" textLabel="sHS-Iy-uBB" detailTextLabel="xSv-jx-pxD" style="IBUITableViewCellStyleValue1" id="nPP-0Q-RIj">
+                                <rect key="frame" x="0.0" y="92" width="600" height="44"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="nPP-0Q-RIj" id="uSe-Fk-OjO">
+                                    <rect key="frame" x="0.0" y="0.0" width="600" height="43"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                    <subviews>
+                                        <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="Title" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="sHS-Iy-uBB">
+                                            <rect key="frame" x="15" y="12" width="32" height="20"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                            <animations/>
+                                            <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                                            <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                            <nil key="highlightedColor"/>
+                                        </label>
+                                        <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" text="Detail" textAlignment="right" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="xSv-jx-pxD">
+                                            <rect key="frame" x="543" y="12" width="42" height="20"/>
+                                            <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                            <animations/>
+                                            <fontDescription key="fontDescription" type="system" pointSize="16"/>
+                                            <color key="textColor" red="0.55686274509803924" green="0.55686274509803924" blue="0.57647058823529407" alpha="1" colorSpace="calibratedRGB"/>
+                                            <nil key="highlightedColor"/>
+                                        </label>
+                                    </subviews>
+                                    <animations/>
+                                </tableViewCellContentView>
+                                <animations/>
+                                <connections>
+                                    <segue destination="cd4-Ub-0GT" kind="unwind" identifier="PerformSearch" unwindAction="performRecentSearch:" id="7It-f2-acU"/>
+                                </connections>
+                            </tableViewCell>
+                        </prototypes>
+                        <connections>
+                            <outlet property="dataSource" destination="0Pb-6O-AMa" id="HJg-gL-SQq"/>
+                            <outlet property="delegate" destination="0Pb-6O-AMa" id="ksf-Y3-MKo"/>
+                        </connections>
+                    </tableView>
+                    <navigationItem key="navigationItem" title="Recent Searches" id="AYn-tj-iTt">
+                        <barButtonItem key="rightBarButtonItem" style="plain" systemItem="done" id="htx-ly-QBS">
+                            <connections>
+                                <segue destination="cd4-Ub-0GT" kind="unwind" unwindAction="closeRecentSearches:" id="kCb-7z-g17"/>
+                            </connections>
+                        </barButtonItem>
+                    </navigationItem>
+                </tableViewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Hmf-bu-KoE" userLabel="First Responder" sceneMemberID="firstResponder"/>
+                <exit id="cd4-Ub-0GT" userLabel="Exit" sceneMemberID="exit"/>
+            </objects>
+            <point key="canvasLocation" x="3118" y="852"/>
         </scene>
         <!--Image Detail View Controller-->
         <scene sceneID="347-vW-ZRE">
@@ -232,7 +294,32 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="nAo-2P-byV" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="2249" y="1150"/>
+            <point key="canvasLocation" x="2287" y="1640"/>
+        </scene>
+        <!--Navigation Controller-->
+        <scene sceneID="x0F-jo-Qca">
+            <objects>
+                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="ajA-bg-pOK" sceneMemberID="viewController">
+                    <toolbarItems/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" barStyle="black" id="8sN-6d-RRG">
+                        <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                        <animations/>
+                        <color key="backgroundColor" red="1" green="0.99997437" blue="0.99999129769999995" alpha="1" colorSpace="calibratedRGB"/>
+                        <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <color key="barTintColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="calibratedRGB"/>
+                        <textAttributes key="titleTextAttributes">
+                            <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        </textAttributes>
+                    </navigationBar>
+                    <nil name="viewControllers"/>
+                    <connections>
+                        <segue destination="0Pb-6O-AMa" kind="relationship" relationship="rootViewController" id="Tft-ge-jQf"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="rBZ-3a-hj6" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2306" y="852"/>
         </scene>
     </scenes>
 </document>

@@ -21,7 +21,6 @@ class ImageSearchController: NSObject {
     }
 
     func queryForImages(query dirtyQueryString:String, withOffset offset:Int, _ completion: ([ImageResult]? -> Void)) {
-        print("Requestion items from offset \(offset)")
         if let queryString = dirtyQueryString.stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLQueryAllowedCharacterSet()),
             let queryURL = NSURL(string: "https://ajax.googleapis.com/ajax/services/search/images?v=1.0&rsz=\(chunkSize)&q=\(queryString)&start=\(offset)") {
                 let queryTask = urlSession.dataTaskWithURL(queryURL, completionHandler:{

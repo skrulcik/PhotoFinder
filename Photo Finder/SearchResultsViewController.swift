@@ -7,18 +7,18 @@
 //
 
 import UIKit
+import CoreData
 
 
-
-class SearchResultsViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UISearchResultsUpdating, UISearchBarDelegate, LoadMoreReusableViewDelegate {
-    @IBOutlet var searchBarWrapper: UIView!
+class SearchResultsViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UISearchBarDelegate, LoadMoreReusableViewDelegate {
+    @IBOutlet var searchBar: UISearchBar!
     @IBOutlet var collectionView: UICollectionView!
     private let numSectionsEmpty = 0
     private let numSectionsResults = 1
     private let resultsSection = 0
 
     private static let detailSegueID = "ImageDetail"
-    private var searchController = UISearchController(searchResultsController: nil)
+    private static let viewRecentsSegueID = "RecentSearches"
     private var imageSearch = ImageSearchController()
     private var resultsToDisplay = [CollectionCellGenerator]()
     private var minimumResultsToShow = 24
@@ -36,23 +36,24 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
         layout.minimumLineSpacing = 2
         return layout
     }()
+    static let managedObjectContext: NSManagedObjectContext = {
+        let appDelegate = UIApplication.sharedApplication().delegate!
+        return (appDelegate as! AppDelegate).managedObjectContext
+        }()
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.navigationItem.title = NSLocalizedString("Photo Finder", comment: "Title of main search page")
 
-        searchController.searchResultsUpdater = self
-        searchController.dimsBackgroundDuringPresentation = false
-        searchController.hidesNavigationBarDuringPresentation = false
-        searchController.searchBar.delegate = self
-        searchController.searchBar.sizeToFit()
-        searchController.searchBar.showsBookmarkButton = true
-        searchController.searchBar.showsCancelButton = false
-        searchController.searchBar.barTintColor = Color.primaryColor
-        searchController.searchBar.tintColor = Color.secondaryColor
+        searchBar.delegate = self
+        searchBar.sizeToFit()
+        searchBar.showsBookmarkButton = true
+//        searchBar.showsCancelButton = true
+        searchBar.barTintColor = Color.primaryColor
+        searchBar.tintColor = Color.secondaryColor
+        searchBar.placeholder = NSLocalizedString("Image Search", comment: "Placeholder for main search bar")
         UITextField.appearanceWhenContainedInInstancesOfClasses([UISearchBar.self]).tintColor = Color.primaryColor
 
-        searchBarWrapper.addSubview(searchController.searchBar)
-        searchBarWrapper.sizeToFit()
         collectionView.delegate = self
         collectionView.dataSource = self
         collectionView.reloadData()
@@ -61,6 +62,11 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
         because collectionView's size is not always updated by the time
         viewDidLoad is called */
         updateFlowLayoutForWidth(view.frame.width)
+    }
+
+    private func dismissKeyboard() {
+        searchBar.resignFirstResponder()
+        searchBar.showsCancelButton = false
     }
 
     private func updateFlowLayoutForWidth(width: CGFloat) {
@@ -73,41 +79,28 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
     /* Overridden to ensure UISearchBar resizes properly on rotation */
     override func viewWillTransitionToSize(size: CGSize, withTransitionCoordinator coordinator: UIViewControllerTransitionCoordinator) {
         super.viewWillTransitionToSize(size, withTransitionCoordinator: coordinator)
-        coordinator.animateAlongsideTransition({
-            (context: UIViewControllerTransitionCoordinatorContext) in
-                self.searchController.searchBar.frame = CGRect(x: self.searchController.searchBar.frame.minX,
-                                                                y: self.searchController.searchBar.frame.minY,
-                                                                width: size.width,
-                                                                height: self.searchController.searchBar.frame.height)
-            }, completion: nil)
         updateFlowLayoutForWidth(size.width)
-    }
-    override func viewWillDisappear(animated: Bool) {
-        super.viewWillDisappear(animated)
-        searchBarWrapper.hidden = true
-        searchController.searchBar.hidden = true
-    }
-    override func viewWillAppear(animated: Bool) {
-        super.viewWillAppear(animated)
-        searchBarWrapper.hidden = false
-        searchController.searchBar.hidden = false
-    }
-
-    // MARK: UISearchResultsUpdating
-    func updateSearchResultsForSearchController(searchController: UISearchController) {
-        // TODO: Fiter shown history as text is typed like Google Instant Search
     }
 
     // MARK: UISearchBarDelegate
     func searchBarBookmarkButtonClicked(searchBar: UISearchBar) {
-        // TODO: History
-        print("Examine History")
+        dismissKeyboard()
+        performSegueWithIdentifier(SearchResultsViewController.viewRecentsSegueID, sender: self)
     }
-    func searchBarTextDidEndEditing(searchBar: UISearchBar) {
+    func searchBarCancelButtonClicked(searchBar: UISearchBar) {
+        dismissKeyboard()
+        searchBar.text = nil
+    }
+    func searchBarSearchButtonClicked(searchBar: UISearchBar) {
+        dismissKeyboard()
         if let rawText = searchBar.text {
             let queryString = rawText.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet())
+            addQueryToHistory(rawText, clean: queryString)
             loadInitialSearch(queryString)
         }
+    }
+    func searchBarTextDidBeginEditing(searchBar: UISearchBar) {
+        searchBar.showsCancelButton = true
     }
     func loadInitialSearch(queryString: String, resultCount: Int = 0) {
         if queryString.characters.count > 0 {
@@ -118,6 +111,29 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
                     self.loadFromOffset(i * self.imageSearch.chunkSize)
                 })
             }
+        }
+    }
+    private func addQueryToHistory(rawQuery: String, clean cleanQuery: String) {
+        let request = NSFetchRequest(entityName: RecentSearch.entityName)
+        request.fetchBatchSize = 1 // Should only be one of each query
+        request.predicate = NSPredicate(format: "displayString == %s", rawQuery)
+        do {
+            let objs = try SearchResultsViewController.managedObjectContext.executeFetchRequest(request)
+            if let matches = objs as? [RecentSearch],
+                let otherSearch = matches.first {
+                    otherSearch.lastSearchDate = NSDate().timeIntervalSince1970
+            } else {
+                if let description = NSEntityDescription.entityForName(RecentSearch.entityName, inManagedObjectContext: SearchResultsViewController.managedObjectContext),
+                let newSearch = NSManagedObject(entity: description, insertIntoManagedObjectContext: SearchResultsViewController.managedObjectContext) as? RecentSearch {
+                    newSearch.lastSearchDate = NSDate().timeIntervalSince1970
+                    newSearch.displayString = rawQuery
+                    newSearch.queryString = cleanQuery
+                }
+            }
+            NSLog("search/history/update \(rawQuery)")
+            (UIApplication.sharedApplication().delegate as! AppDelegate).saveContext()
+        } catch {
+            NSLog("search/history/add-query/error \(error)")
         }
     }
 
@@ -191,6 +207,13 @@ class SearchResultsViewController: UIViewController, UICollectionViewDelegate, U
             let detailVC = segue.destinationViewController as? ImageDetailViewController,
             let selectedImageResult = currentSelection {
                 detailVC.imageResult = selectedImageResult
+        } else if segue.identifier == RecentSearchesTableViewController.performSearchSegueID,
+            let recentSearchesTVC = sender as? RecentSearchesTableViewController,
+            let lastSearch = recentSearchesTVC.selectedSearch,
+            let queryString = lastSearch.queryString {
+                loadInitialSearch(queryString)
         }
     }
+    @IBAction func closeRecentSearches(segue: UIStoryboardSegue) { }
+    @IBAction func performRecentSearch(segue: UIStoryboardSegue) { }
 }
