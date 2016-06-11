@@ -19,7 +19,7 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
     private var imageSearch = ImageSearchController()
     private var resultsToDisplay = [ImageResult]()
     private var resultViews = [ImageResultView]()
-    private var minimumResultsToShow = 24
+    private var minimumResultsToShow = 6
     private var lastRequestedIndex = 0
     private var currentQuery: String?
     private var currentSelectionIndex: Int?
@@ -46,11 +46,58 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
         layoutInScrollView(view.frame.width)
     }
 
+    /* Overridden to ensure UISearchBar resizes properly on rotation */
+    override func viewWillTransitionToSize(size: CGSize, withTransitionCoordinator coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransitionToSize(size, withTransitionCoordinator: coordinator)
+        coordinator.animateAlongsideTransition({
+            (context) in
+            self.layoutInScrollView(size.width)
+            }, completion: nil)
+    }
+
     private func dismissKeyboard() {
         searchBar.resignFirstResponder()
         searchBar.showsCancelButton = false
     }
 
+    // MARK: Search Management
+    func loadInitialSearch(queryString: String, resultCount: Int = 0) {
+        if queryString.characters.count > 0 {
+            currentQuery = queryString
+            resultsToDisplay = []
+            lastRequestedIndex = 0
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), {
+                for i in 0..<(self.minimumResultsToShow / self.imageSearch.chunkSize) {
+                    self.loadFromOffset(i * self.imageSearch.chunkSize + 1)
+                }
+            })
+        }
+    }
+
+    func loadMore() {
+        loadFromOffset(lastRequestedIndex)
+    }
+    func loadFromOffset(offset: Int) {
+        if offset >= lastRequestedIndex {
+            lastRequestedIndex = offset + imageSearch.chunkSize
+            if let queryString = currentQuery {
+                imageSearch.queryForImages(query: queryString, withOffset: offset,{
+                    (results: [ImageResult]?) in
+                    if let results = results
+                        where queryString == self.currentQuery {
+                            // 'where' clause ensures we don't add results if they took too long
+                            // and the user has entered a new string before they've been displayed
+                            dispatch_async(dispatch_get_main_queue(), {
+                                self.resultsToDisplay += results
+                                self.layoutInScrollView(self.view.frame.width)
+                            })
+                    }
+                })
+            }
+        }
+    }
+
+    // MARK: UIScrollViewManagement
     private func layoutInScrollView(width: CGFloat, startIndex: Int = 0) {
         if resultsToDisplay.count > 0 {
             let imageSize = CGSize(width: maxImageWidth, height: maxImageWidth)
@@ -72,7 +119,7 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
                     resultView.imageResult = object
                 }
 
-                let tapForInfo = UITapGestureRecognizer(target: self, action: "showImageDetail:")
+                let tapForInfo = UITapGestureRecognizer(target: self, action: #selector(SearchResultsViewController.showImageDetail(_:)))
                 tapForInfo.numberOfTapsRequired = 1
                 tapForInfo.numberOfTouchesRequired = 1
                 resultView.addGestureRecognizer(tapForInfo)
@@ -90,16 +137,19 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
 //            removeResultViewsBeyondIndex(resultsToDisplay.count)
         }
     }
+
     private func imagesPerRowForWidth(width: CGFloat) -> Int {
         return Int(width / maxImageWidth)
     }
     private func spacingForWidth(width: CGFloat, withImageCount count: CGFloat) -> CGFloat {
         return (width - (count * maxImageWidth)) / count
     }
+
     private func heightOfAllImages(totalCount: Int, imagesPerRow: Int, spacing: CGFloat, imageHeight: CGFloat) -> CGFloat {
         let numRows = ceil(CGFloat(totalCount) / CGFloat(imagesPerRow))
         return numRows * (spacing + imageHeight)
     }
+
     private func dequeueResultViewForIndex(index: Int) -> ImageResultView {
         if index < resultViews.count {
             return resultViews[index]
@@ -109,19 +159,11 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
         scrollView.addSubview(newResultView)
         return newResultView
     }
+
     private func removeResultViewsBeyondIndex(index: Int) {
         if index < resultViews.count {
             resultViews = Array(resultViews.dropLast(resultViews.count - index))
         }
-    }
-
-    /* Overridden to ensure UISearchBar resizes properly on rotation */
-    override func viewWillTransitionToSize(size: CGSize, withTransitionCoordinator coordinator: UIViewControllerTransitionCoordinator) {
-        super.viewWillTransitionToSize(size, withTransitionCoordinator: coordinator)
-        coordinator.animateAlongsideTransition({
-            (context) in
-                self.layoutInScrollView(size.width)
-            }, completion: nil)
     }
 
     // MARK: UIScrollViewDelegate
@@ -158,52 +200,13 @@ class SearchResultsViewController: UIViewController, UISearchBarDelegate, UIScro
     func searchBarTextDidBeginEditing(searchBar: UISearchBar) {
         searchBar.showsCancelButton = true
     }
-    func loadInitialSearch(queryString: String, resultCount: Int = 0) {
-        if queryString.characters.count > 0 {
-            currentQuery = queryString
-            resultsToDisplay = []
-            lastRequestedIndex = 0
-            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), {
-                for i in 0..<(self.minimumResultsToShow / self.imageSearch.chunkSize) {
-                    self.loadFromOffset(i * self.imageSearch.chunkSize)
-                }
-            })
-        }
-    }
-
-    // MARK: LoadMoreReusableViewDelegate
-    func loadFromOffset(offset: Int) {
-        if offset >= lastRequestedIndex {
-            lastRequestedIndex = offset + imageSearch.chunkSize
-            if let queryString = currentQuery {
-                imageSearch.queryForImages(query: queryString, withOffset: offset,{
-                    (results: [ImageResult]?) in
-                    if let results = results
-                        where queryString == self.currentQuery {
-                            // 'where' clause ensures we don't add results if they took too long
-                            // and the user has entered a new string before they've been displayed
-                            dispatch_async(dispatch_get_main_queue(), {
-                                self.resultsToDisplay += results
-                                self.layoutInScrollView(self.view.frame.width)
-                            })
-                    }
-                })
-            }
-        }
-    }
-
-    func loadMore() {
-        loadFromOffset(lastRequestedIndex)
-    }
-
 
     // MARK: Gesture Recognition
     func showImageDetail(gestureRecognizer: UITapGestureRecognizer) {
         if let resultView = gestureRecognizer.view as? ImageResultView
         where resultView.imageResult != nil,
         let selectionIndex = resultViews.indexOf(resultView) {
-            let intIndex = Int(selectionIndex.value)
-            currentSelectionIndex = intIndex
+            currentSelectionIndex = selectionIndex
             performSegueWithIdentifier(SearchResultsViewController.detailSegueID, sender: self)
         }
     }
