@@ -21,25 +21,14 @@ allowing object-like access from other files.
 
 */
 class ImageResult: NSObject {
-    private enum Key: String {
-        case ThumbnailURL = "tbUrl"
-        case ImageURL = "url"
-        case HumanReadableURL = "visibleUrl"
-        case WebsiteURL = "originalContextUrl"
-        case Title = "titleNoFormatting"
-        case Description = "contentNoFormatting"
-        static let requiredKeys = [ThumbnailURL, ImageURL, HumanReadableURL, WebsiteURL, Title, Description]
-    }
-    private var properties: [Key : AnyObject]
-    private var thumbnail: UIImage?
-    private var fullImage: UIImage?
-    var imageTitle: String {
-        return properties[.Title] as! String
-    }
+    let imageTitle: String
+    let snippet: String
+    let link: String
+    let width: Int
+    let height: Int
+    let thumbnailLink: String
     var imageDescription: String {
-        let url = properties[.WebsiteURL] as! String
-        let info = properties[.Description] as! String
-        return "\(url)\n\(info)"
+        return "\(link)\n\(snippet)"
     }
 
 
@@ -60,46 +49,50 @@ class ImageResult: NSObject {
     required keys are missing, initialization fails.
     */
     init?(json: [String : AnyObject]) {
-        properties = [:]
-        super.init()
-        for key in Key.requiredKeys {
-            if let obj = json[key.rawValue] {
-                properties[key] = obj
-            } else {
-                return nil
-            }
+        if let imageTitle = json["title"] as? String,
+        let snippet = json["snippet"] as? String,
+        let link = json["link"] as? String,
+        let rawImageData = json["image"] as? [String : AnyObject],
+        let width = rawImageData["width"] as? Int,
+        let height = rawImageData["height"] as? Int,
+            let thumbnailLink = rawImageData["thumbnailLink"] as? String {
+            self.imageTitle = imageTitle
+            self.snippet = snippet
+            self.link = link
+            self.width = width
+            self.height = height
+            self.thumbnailLink = thumbnailLink
+            super.init()
+        } else {
+            return nil
         }
     }
+}
 
+/**
+Slight breach of MVC here, but this allows the model, which has access to
+both the thumbnail and regular URL, populate images with increasing resolution.
+Because theses methods are here, it is achieved without any other classes
+poking around the JSON, which is the point of this class.
+*/
+extension ImageResult {
     /**
     Downloads full image (if necessary) and populates the given UIImageView
     Completion handler is only called on success
     */
     func populateViewWithImage(imageView: UIImageView, completion: (Void -> Void)? = nil) {
-        if let fullImage = fullImage {
-            imageView.image = fullImage
-            completion?()
-        } else {
-            if let thumbnail = thumbnail {
-                imageView.image = thumbnail
-            }
-            populateViewFromURL(imageView, .ImageURL, completion: completion)
-        }
+        populateViewFromURL(imageView, linkString: link, completion: completion)
     }
     /**
     Downloads thumbnail (if necessary) and populates the given UIImageView
     Completion handler is only called on success
     */
     func populateViewWithImageThumbnail(imageView: UIImageView, completion: (Void -> Void)? = nil) {
-        if let thumbnail = thumbnail {
-            imageView.image = thumbnail
-            completion?()
-        } else {
-            populateViewFromURL(imageView, .ThumbnailURL, completion: completion)
-        }
+        populateViewFromURL(imageView, linkString: thumbnailLink, completion: completion)
     }
-    private func populateViewFromURL(imageView: UIImageView, _ urlKey: Key, completion: (Void -> Void)? = nil) {
-        if let imageURL = NSURL(string: properties[urlKey] as! String) {
+
+    private func populateViewFromURL(imageView: UIImageView, linkString: String, completion: (Void -> Void)? = nil) {
+        if let imageURL = NSURL(string: linkString) {
             let sessionConfig = NSURLSessionConfiguration.defaultSessionConfiguration()
             let session = NSURLSession(configuration: sessionConfig)
             let imageDownload = session.downloadTaskWithURL(imageURL, completionHandler: {
@@ -107,11 +100,6 @@ class ImageResult: NSObject {
                 if let imageLocation = imageLocation,
                     let imageData = NSData(contentsOfURL: imageLocation),
                     let image = UIImage(data: imageData) {
-                        if urlKey == .ThumbnailURL {
-                            self.thumbnail = image
-                        } else if urlKey == .ImageURL {
-                            self.fullImage = image
-                        }
                         dispatch_async(dispatch_get_main_queue(), {
                             imageView.image = image
                             completion?()
